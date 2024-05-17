@@ -1,22 +1,19 @@
-{% extends 'crud/base.html' %}
+{% extends "base.html" %}
 
 {% block title %}商品詳細{% endblock %}
-
 {% block content %}
-<h1 class="mt-4">商品詳細</h1>
-<table class="table table-bordered mt-3">
+<h1>商品詳細</h1>
+<table class="table table-striped table-hover table-bordered">
     <thead>
         <tr>
             <th>商品名</th>
             <th>価格</th>
         </tr>
     </thead>
-    <tbody>
-        <tr>
-            <td>{{ product.name }}</td>
-            <td>{{ product.price }} 円</td>
-        </tr>
-    </tbody>
+    <tr>
+        <td>{{ product.name }}</td>
+        <td>{{ product.price }} 円</td>
+    </tr>
 </table>
-<a href="{% url 'product_list' %}" class="btn btn-primary mt-3">戻る</a>
+<a href="{% url 'list' %}">戻る</a>
 {% endblock %}

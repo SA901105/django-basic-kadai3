@@ -23,11 +23,11 @@ from crud.views import ProductDetailView, ProductListView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # path('', views.TopView.as_view(), name="top"),
+    path('', views.TopView.as_view(), name="top"),
     path('crud/', views.ProductListView.as_view(), name="list"),
-    path('detail/<int:pk>/', ProductDetailView.as_view(), name='product_detail'),
-    # path('crud/new/', views.ProductCreateView.as_view(), name="new"),
-    # path('crud/edit/<int:pk>', views.ProductUpdateView.as_view(), name="edit"),
-    # path('crud/delete/<int:pk>', views.ProductDeleteView.as_view(), name="delete"),
+    # path('detail/<int:pk>/', ProductDetailView.as_view(), name='product_detail'),
+    path('crud/new/', views.ProductCreateView.as_view(), name="new"),
+    path('crud/edit/<int:pk>', views.ProductUpdateView.as_view(), name="edit"),
+    path('crud/delete/<int:pk>', views.ProductDeleteView.as_view(), name="delete"),
 ]
 

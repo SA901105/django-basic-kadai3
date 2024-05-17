@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>商品詳細</title>
+    <!-- BootstrapのCSSを追加 -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1 class="my-4">商品詳細</h1>
+        <table class="table table-striped">
+            <tr>
+                <th>商品名</th>
+                <td>{{ product.name }}</td>
+            </tr>
+            <tr>
+                <th>価格</th>
+                <td>{{ product.price }} 円</td>
+            </tr>
+            <tr>
+                <th>カテゴリ</th>
+                <td>{{ product.category }}</td>
+            </tr>
+            <tr>
+                <th>商品画像</th>
+                <td>
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" style="max-width: 200px;">
+                    {% else %}
+                        画像はありません
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>商品詳細の説明</th>
+                <td>{{ product.description }}</td>
+            </tr>
+        </table>
+        <a href="{% url 'list' %}" class="btn btn-primary">戻る</a>
+    </div>
+    <!-- BootstrapのJavaScriptを追加 -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
