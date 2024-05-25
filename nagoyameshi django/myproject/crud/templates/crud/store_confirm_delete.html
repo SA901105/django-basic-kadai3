@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}店舗削除{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">店舗削除</h1>
+    <p>本当に "{{ store.name }}" を削除してもよろしいですか？</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">削除</button>
+        <a href="{% url 'store_list' %}" class="btn btn-secondary">キャンセル</a>
+    </form>
+</div>
+{% endblock %}

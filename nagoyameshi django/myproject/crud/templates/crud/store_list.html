@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}店舗一覧{% endblock %}
+
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="#">管理者ページ</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNav">
+    <ul class="navbar-nav">
+      <li class="nav-item active">
+        <a class="nav-link" href="#">店舗一覧 <span class="sr-only">(current)</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'store_create' %}">新規作成</a>
+      </li>
+    </ul>
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'logout' %}">ログアウト</a>
+      </li>
+    </ul>
+  </div>
+</nav>
+<div class="container mt-5">
+    <h1 class="mb-4">店舗一覧</h1>
+    <a href="{% url 'store_create' %}" class="btn btn-primary mb-3">新規作成</a>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">店舗名</th>
+                <th scope="col">予算</th>
+                <th scope="col">ジャンル</th>
+                <th scope="col">画像</th>
+                <th scope="col">アクション</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for store in stores %}
+            <tr>
+                <td>{{ store.name }}</td>
+                <td>{{ store.budget }} 円</td>
+                <td>{{ store.genre }}</td>
+                <td>
+                    {% if store.image %}
+                        <img src="{{ store.image.url }}" alt="{{ store.name }}" width="100">
+                    {% else %}
+                        <img src="{% static 'noImage.png' %}" alt="No Image" width="100">
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'store_detail' store.pk %}" class="btn btn-success btn-sm">詳細</a>
+                    <a href="{% url 'store_edit' store.pk %}" class="btn btn-primary btn-sm">編集</a>
+                    <a href="{% url 'store_delete' store.pk %}" class="btn btn-danger btn-sm">削除</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="d-flex justify-content-between">
+        <div>
+            {{ page_obj.number }} / {{ page_obj.paginator.num_pages }} ページ
+        </div>
+        <div>
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary">前へ</a>
+            {% endif %}
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary">次へ</a>
+            {% endif %}
+        </div>
+    </div>
+    <div>
+        <a href="{% url 'store_list' %}" class="btn btn-secondary">戻る</a>
+    </div>
+</div>
+{% endblock %}

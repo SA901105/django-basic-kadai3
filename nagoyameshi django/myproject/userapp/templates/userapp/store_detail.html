@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>店舗詳細</title>
+</head>
+<body>
+    <h1>{{ store.name }}</h1>
+    <p>住所: {{ store.address }}</p>
+    <p>電話番号: {{ store.phone_number }}</p>
+    <p>カテゴリー: {{ store.category.name }}</p>
+    <p>詳細: {{ store.detail }}</p>
+    {% if store.img %}
+    <img src="{{ store.img.url }}" alt="{{ store.name }}">
+    {% endif %}
+</body>
+</html>
