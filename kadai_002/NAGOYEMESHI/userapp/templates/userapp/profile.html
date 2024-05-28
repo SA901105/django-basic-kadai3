@@ -1,0 +1,18 @@
+<!-- templates/userapp/profile.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<h1>会員情報</h1>
+<table>
+  <tr>
+    <th>氏名</th>
+    <td>{{ user.first_name }} {{ user.last_name }}</td>
+  </tr>
+  <tr>
+    <th>メールアドレス</th>
+    <td>{{ user.email }}</td>
+  </tr>
+  <!-- 他のプロフィール情報もここに追加できます -->
+</table>
+<a href="{% url 'userapp:mypage' %}">マイページに戻る</a>
+{% endblock %}

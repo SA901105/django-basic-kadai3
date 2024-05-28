@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load bootstrap4 %}
+
+{% block title %}店舗編集{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">店舗編集</h1>
+    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        <button type="submit" class="btn btn-primary mt-3">保存</button>
+        <a href="{% url 'store_list' %}" class="btn btn-secondary mt-3">キャンセル</a>
+    </form>
+</div>
+{% endblock %}

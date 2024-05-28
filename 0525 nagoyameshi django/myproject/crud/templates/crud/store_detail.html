@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}店舗詳細{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">店舗詳細</h1>
+    <table class="table table-striped table-hover table-bordered">
+        <tr>
+            <th>店舗名</th>
+            <td>{{ store.name }}</td>
+        </tr>
+        <tr>
+            <th>住所</th>
+            <td>{{ store.address }}</td>
+        </tr>
+        <tr>
+            <th>電話番号</th>
+            <td>{{ store.phone_number }}</td>
+        </tr>
+        <tr>
+            <th>予算</th>
+            <td>{{ store.price }} 円</td>
+        </tr>
+        <tr>
+            <th>ジャンル</th>
+            <td>{{ store.category.name }}</td>
+        </tr>
+        <tr>
+            <th>画像</th>
+            <td>
+                {% if store.img %}
+                    <img src="{{ store.img.url }}" class="img-fluid" style="width:100px; height:auto;">
+                {% else %}
+                    画像なし
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>店舗詳細</th>
+            <td>{{ store.detail | linebreaksbr }}</td>
+        </tr>
+    </table>
+    <div class="mt-4">
+        <a href="{% url 'store_list' %}" class="btn btn-secondary">戻る</a>
+        <a href="{% url 'store_edit' store.id %}" class="btn btn-primary">編集</a>
+        <a href="{% url 'store_delete' store.id %}" class="btn btn-danger">削除</a>
+    </div>
+</div>
+{% endblock %}
