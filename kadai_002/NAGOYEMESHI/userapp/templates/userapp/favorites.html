@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <h1>お気に入り一覧</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>店舗名</th>
+                <th>郵便番号</th>
+                <th>住所</th>
+                <th>解除</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>台湾ラーメン 田中 守山本店</td>
+                <td>123-4567</td>
+                <td>愛知県名古屋市中区栄X-XX-XX</td>
+                <td><a href="#">解除</a></td>
+            </tr>
+            <tr>
+                <td>NAGOYA BURGER 名駅店</td>
+                <td>204-4168</td>
+                <td>和歌山県三宅市山本町加藤2-10-5 ハイツ井上101号</td>
+                <td><a href="#">解除</a></td>
+            </tr>
+            <tr>
+                <td>魚と野菜と酒 じゃばらむ</td>
+                <td>523-6344</td>
+                <td>三重県井上市山口町高橋6-10-5 ハイツ坂本110号</td>
+                <td><a href="#">解除</a></td>
+            </tr>
+            <!-- 他のお気に入りを追加 -->
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,10 +1,8 @@
-from django.shortcuts import render, redirect
-from django.views.generic import CreateView, TemplateView, View
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.generic import CreateView, TemplateView, View, FormView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Review, Category, Subscription
+from .models import Review, Category, Subscription, Shop
 from .forms import SearchForm, SignUpForm, LoginForm, ReviewForm
-import json
-import requests
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.views import LoginView, LogoutView
 from django.db.models import Avg
@@ -15,11 +13,9 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
+from django import forms
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
-
-def get_keyid():
-    return "296f76d7037341ade00e99ce1c5da7bb"
 
 class IndexView(TemplateView):
     template_name = 'userapp/index.html'
@@ -27,10 +23,8 @@ class IndexView(TemplateView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         searchform = SearchForm()
-        query = get_gnavi_data("", "RSFST09000", "", "花見", 12)
-        res_list = rest_search(query)
-        pickup_list = extract_restaurant_info(res_list)
-        review_list = Review.objects.all()[:10]
+        pickup_list = Shop.objects.all()[:10]
+        review_list = Review.objects.select_related('shop').all()[:10]
         category_list = Category.objects.all()
 
         context.update({
@@ -42,6 +36,7 @@ class IndexView(TemplateView):
 
         return context
 
+
 def Search(request):
     total_hit_count = 0
     restaurants_info = []
@@ -52,10 +47,9 @@ def Search(request):
         if searchform.is_valid():
             category_l = request.GET.get('selected_category', '')
             freeword = request.GET.get('freeword', '')
-            query = get_gnavi_data("", category_l, "", freeword, 10)
-            res_list = rest_search(query)
-            total_hit_count = len(res_list)
-            restaurants_info = extract_restaurant_info(res_list)
+            query = Shop.objects.filter(name__icontains=freeword, category__category_l=category_l)[:10]
+            total_hit_count = query.count()
+            restaurants_info = query
 
     params = {
         'total_hit_count': total_hit_count,
@@ -64,72 +58,17 @@ def Search(request):
 
     return render(request, 'userapp/search.html', params)
 
-def get_gnavi_data(id, category_l, pref, freeword, hit_per_page):
-    keyid = get_keyid()
-    area = "AREA110"
-    query = {
-        "keyid": keyid,
-        "id": id,
-        "area": area,
-        "pref": pref,
-        "category_l": category_l,
-        "hit_per_page": hit_per_page,
-        "freeword": freeword
-    }
-    return query
-
-def rest_search(query):
-    res_list = []
-    try:
-        response = requests.get("https://api.gnavi.co.jp/RestSearchAPI/v3/", params=query)
-        response.raise_for_status()
-        res = response.json()
-        if "error" not in res:
-            res_list.extend(res.get("rest", []))
-    except requests.exceptions.RequestException as e:
-        print(f"HTTPリクエストに失敗しました: {e}")
-    except json.JSONDecodeError:
-        print("レスポンスのJSONデコードに失敗しました")
-    return res_list
-
-def extract_restaurant_info(restaurants):
-    restaurant_list = []
-    for restaurant in restaurants:
-        id = restaurant.get("id")
-        name = restaurant.get("name")
-        name_kana = restaurant.get("name_kana")
-        url = restaurant.get("url")
-        url_mobile = restaurant.get("url_mobile")
-        shop_image1 = restaurant.get("image_url", {}).get("shop_image1")
-        shop_image2 = restaurant.get("image_url", {}).get("shop_image2")
-        address = restaurant.get("address")
-        tel = restaurant.get("tel")
-        station_line = restaurant.get("access", {}).get("line")
-        station = restaurant.get("access", {}).get("station")
-        latitude = restaurant.get("latitude")
-        longitude = restaurant.get("longitude")
-        pr_long = restaurant.get("pr", {}).get("pr_long")
-
-        restaurant_list.append([
-            id, name, name_kana, url, url_mobile, shop_image1, shop_image2,
-            address, tel, station_line, station, latitude, longitude, pr_long
-        ])
-    return restaurant_list
-
-def ShopInfo(request, restid):
-    keyid = get_keyid()
-    id = restid
-    query = get_gnavi_data(id, "", "", "", 1)
-    res_list = rest_search(query)
-    restaurants_info = extract_restaurant_info(res_list)
-    review_count = Review.objects.filter(shop_id=restid).count()
-    score_ave = Review.objects.filter(shop_id=restid).aggregate(Avg('score'))
+@login_required
+def ShopInfo(request, shop_id):
+    shop = get_object_or_404(Shop, pk=shop_id)
+    review_count = Review.objects.filter(shop=shop).count()
+    score_ave = Review.objects.filter(shop=shop).aggregate(Avg('score'))
     average = score_ave['score__avg']
     average_rate = average / 5 * 100 if average else 0
 
     if request.method == 'GET':
         review_form = ReviewForm()
-        review_list = Review.objects.filter(shop_id=restid)
+        review_list = Review.objects.filter(shop=shop)
     else:
         form = ReviewForm(data=request.POST)
         score = request.POST['score']
@@ -137,23 +76,21 @@ def ShopInfo(request, restid):
 
         if form.is_valid():
             review = Review()
-            review.shop_id = restid
-            review.shop_name = restaurants_info[0][1]
-            review.image_url = restaurants_info[0][5]
+            review.shop = shop
             review.user = request.user
             review.score = score
             review.comment = comment
             review.save()
             messages.success(request, 'レビューを投稿しました。')
-            return redirect('userapp:shop_info', restid)
+            return redirect('userapp:shop_info', shop_id)
         else:
             messages.error(request, 'エラーがあります。')
-            return redirect('userapp:shop_info', restid)
+            return redirect('userapp:shop_info', shop_id)
 
     params = {
         'title': '店舗詳細',
         'review_count': review_count,
-        'restaurants_info': restaurants_info,
+        'shop': shop,
         'review_form': review_form,
         'review_list': review_list,
         'average': average,
@@ -161,7 +98,6 @@ def ShopInfo(request, restid):
     }
 
     return render(request, 'userapp/shop_info.html', params)
-
 
 class SignUp(CreateView):
     form_class = SignUpForm
@@ -214,7 +150,6 @@ class SubscriptionView(TemplateView):
         context['subscription'] = subscription
         return context
 
-# StripeのWebhookエンドポイントを設定
 @csrf_exempt
 def stripe_webhook(request):
     payload = request.body
@@ -256,10 +191,24 @@ class FavoritesView(LoginRequiredMixin, TemplateView):
 class PaymentMethodView(LoginRequiredMixin, TemplateView):
     template_name = 'userapp/payment_method.html'
 
-class CancelSubscriptionView(LoginRequiredMixin, View):
-    def post(self, request, *args, **kwargs):
-        subscription = Subscription.objects.get(user=request.user)
+class CancelSubscriptionForm(forms.Form):
+    pass  # 特別なフィールドは不要
+
+@method_decorator(login_required, name='dispatch')
+class CancelSubscriptionView(LoginRequiredMixin, FormView):
+    template_name = 'userapp/cancel_subscription.html'
+    form_class = CancelSubscriptionForm
+
+    def form_valid(self, form):
+        subscription = Subscription.objects.get(user=self.request.user)
         stripe.Subscription.delete(subscription.stripe_subscription_id)
         subscription.active = False
         subscription.save()
+        messages.success(self.request, '有料プランを解約しました。')
         return redirect('userapp:mypage')
+
+def common_context(request):
+    category_list = Category.objects.all()
+    return {
+        'category_list': category_list,
+    }

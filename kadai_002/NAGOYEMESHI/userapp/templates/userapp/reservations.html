@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <h1>予約一覧</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>店舗名</th>
+                <th>予約日時</th>
+                <th>人数</th>
+                <th>キャンセル</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>エチュバリア</td>
+                <td>2024年5月31日 12時00分</td>
+                <td>2名</td>
+                <td><a href="#">キャンセル</a></td>
+            </tr>
+            <tr>
+                <td>大衆焼肉酒場 ホルモン屋 栄店</td>
+                <td>2024年5月30日 4時00分</td>
+                <td>6名</td>
+                <td><a href="#">キャンセル</a></td>
+            </tr>
+            <tr>
+                <td>炭火やきとり マメ</td>
+                <td>2024年5月26日 2時30分</td>
+                <td>50名</td>
+                <td><a href="#">キャンセル</a></td>
+            </tr>
+            <!-- 他の予約を追加 -->
+        </tbody>
+    </table>
+</div>
+{% endblock %}

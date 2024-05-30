@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
-    IndexView, SignUp, Login, CustomLogoutView, Search, ShopInfo, 
-    SubscriptionView, stripe_webhook, MyPageView, ProfileView, 
+    IndexView, SignUp, Login, CustomLogoutView, Search, ShopInfo,
+    SubscriptionView, stripe_webhook, MyPageView, ProfileView,
     ReservationsView, FavoritesView, PaymentMethodView, CancelSubscriptionView
 )
 
@@ -13,7 +13,7 @@ urlpatterns = [
     path('login/', Login.as_view(), name='login'),
     path('logout/', CustomLogoutView.as_view(), name='logout'),
     path('search/', Search, name='search'),
-    path('shop_info/<str:restid>/', ShopInfo, name='shop_info'),
+    path('shop_info/<int:shop_id>/', ShopInfo, name='shop_info'),
     path('subscription/', SubscriptionView.as_view(), name='subscription'),
     path('stripe_webhook/', stripe_webhook, name='stripe_webhook'),
     path('mypage/', MyPageView.as_view(), name='mypage'),

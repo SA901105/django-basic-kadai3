@@ -1,5 +1,6 @@
+# models.py
 from django.db import models
-from django.contrib.auth.models import User  # 追加
+from django.contrib.auth.models import User
 
 class Category(models.Model):
     category_l = models.CharField("業態カテゴリ", max_length=10, blank=False)
@@ -16,10 +17,20 @@ SCORE_CHOICES = [
     (5, '★★★★★'),
 ]
 
+class Shop(models.Model):
+    name = models.CharField("店舗名", max_length=255)
+    pr_long = models.TextField("店舗PR", blank=True, null=True)
+    price_range = models.CharField("価格帯", max_length=100, blank=True, null=True)
+    address = models.CharField("住所", max_length=255, blank=True, null=True)
+    opening_hours = models.CharField("営業時間", max_length=255, blank=True, null=True)
+    regular_holiday = models.CharField("定休日", max_length=255, blank=True, null=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name="カテゴリ")
+
+    def __str__(self):
+        return self.name
+
 class Review(models.Model):
-    shop_id = models.CharField('店舗ID', max_length=10, blank=False)
-    shop_name = models.CharField('店舗名', max_length=200, blank=False)
-    image_url = models.CharField('画像１URL', max_length=300, blank=True)
+    shop = models.ForeignKey(Shop, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.PROTECT)
     comment = models.TextField(verbose_name='レビューコメント', blank=False)
     score = models.PositiveSmallIntegerField(verbose_name='レビュースコア', choices=SCORE_CHOICES, default=3)
@@ -27,10 +38,10 @@ class Review(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('shop_id', 'user')
+        unique_together = ('shop', 'user')
 
     def __str__(self):
-        return str(self.shop_id)
+        return f'{self.shop.name} - {self.user.username}'
 
     def get_percent(self):
         percent = round(self.score / 5 * 100)

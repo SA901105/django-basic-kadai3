@@ -1,36 +1,43 @@
 {% load static %}
 
 <!doctype html>
-<html lang="ja">
 <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <!-- オリジナルのCSS -->
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="{% static 'js/index.js' %}"></script> <!-- これを追加 -->
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
     <link rel="stylesheet" type="text/css" href="{% static 'css/common.css' %}">
-    {% block script %}{% endblock script %}
-    {% block css %}{% endblock css %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/index.css' %}">
+    <div id="fb-root"></div>
     <title>NAGOYAMESI</title>
+    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v3.3&appId=800322963696452"></script>
+    <!-- Twitterシェア追加　ここから -->
+    <!-- <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false">Tweet</a> -->
+    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+    <!-- Twitterシェア追加　ここまで -->
+    {% block css %}{% endblock css %}
 </head>
-<body>
+    
+<body>    
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-right">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="{% url 'userapp:index' %}">NAGOYAMESI</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
+            <ul class="navbar-nav mr-auto">
                 <li class="nav-item active">
                     <a class="nav-link" href="{% url 'userapp:index' %}">TOP<span class="sr-only">(current)</span></a>
                 </li>
             </ul>
-
             <ul class="navbar-nav ml-auto">
                 {% if user.is_authenticated %}
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        マイページ
-                    </a>
+                <li class="nav-item">
+                    <a class="nav-item nav-link" href="{% url 'userapp:mypage' %}">マイページ</a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <a class="dropdown-item" href="{% url 'userapp:profile' %}">会員情報</a>
                         <a class="dropdown-item" href="{% url 'userapp:reservations' %}">予約一覧</a>
@@ -42,42 +49,21 @@
                 <li class="nav-item">
                     <form method="post" action="{% url 'userapp:logout' %}">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-link nav-item nav-link">ログアウト</button>
+                        <button type="submit" class="btn btn-link nav-link">ログアウト</button>
                     </form>
                 </li>
                 {% else %}
                 <li class="nav-item">
-                    <a class="nav-item nav-link" href="{% url 'userapp:login' %}">ログイン</a>
+                    <a class="nav-link" href="{% url 'userapp:login' %}">ログイン</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-item nav-link" href="{% url 'userapp:signup' %}">新規ユーザ登録</a>
+                    <a class="nav-link" href="{% url 'userapp:signup' %}">新規ユーザ登録</a>
                 </li>
                 {% endif %}
             </ul>
-
-            <form method="GET" action="{% url 'userapp:search' %}" name="searchform">
-                <ul class="navbar-nav mr-auto">  
-                    <li class="nav-item">
-                        <select class="form-control nav-link" name="category_l">
-                            <option value="">カテゴリ</option>
-                            {% for item in category_list %}
-                            <option value="{{ item.category_l }}">{{ item.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </li>
-                    <li class="nav-item">
-                        <input class="form-control nav-link" type="text" placeholder="フリーワード" aria-label="Search" name="freeword">
-                    </li>
-                    <span>　</span>
-                    <li class="nav-item">
-                        <button type="submit" class="btn common-btn">検索</button>
-                    </li>      
-                </ul>
-            </form>
         </div>
     </nav>
     <br>
-    <!-- メッセージフレームワーク追加　ここから-->
     {% if messages %}
     <div class="container" style="margin-top:1rem;">
         <div class="message">
@@ -98,18 +84,15 @@
         </div>
     </div>
     {% endif %}
-    <!-- メッセージフレームワーク追加　ここまで-->
     {% block content %}
     {% endblock %}
-
     <br><br>
-    <!-- フッター -->
     <div class="container">
         <div class="row">
             <div class="col-md-12 text-center">
                 <br/><br/>
                 <hr/>
-                <p>NAGOYAMESI</p>
+                <p>NAGOYAMESHI</p>
                 <br/><br/>  
             </div>
         </div>
