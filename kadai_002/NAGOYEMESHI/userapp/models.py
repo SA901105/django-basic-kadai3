@@ -19,8 +19,8 @@ SCORE_CHOICES = [
 
 class Shop(models.Model):
     name = models.CharField("店舗名", max_length=255)
-    pr_long = models.TextField("店舗PR", blank=True, null=True)
-    price_range = models.CharField("価格帯", max_length=100, blank=True, null=True)
+    pr_long = models.TextField("店舗紹介", blank=True, null=True)
+    price_range = models.CharField("予算", max_length=100, blank=True, null=True)  # 変更
     address = models.CharField("住所", max_length=255, blank=True, null=True)
     opening_hours = models.CharField("営業時間", max_length=255, blank=True, null=True)
     regular_holiday = models.CharField("定休日", max_length=255, blank=True, null=True)

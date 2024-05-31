@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import CreateView, TemplateView, View, FormView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Review, Category, Subscription, Shop
-from .forms import SearchForm, SignUpForm, LoginForm, ReviewForm
+from .forms import SearchForm, SignUpForm, EmailLoginForm, ReviewForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.views import LoginView, LogoutView
 from django.db.models import Avg
@@ -36,7 +36,6 @@ class IndexView(TemplateView):
 
         return context
 
-
 def Search(request):
     total_hit_count = 0
     restaurants_info = []
@@ -58,18 +57,31 @@ def Search(request):
 
     return render(request, 'userapp/search.html', params)
 
-@login_required
-def ShopInfo(request, shop_id):
-    shop = get_object_or_404(Shop, pk=shop_id)
-    review_count = Review.objects.filter(shop=shop).count()
-    score_ave = Review.objects.filter(shop=shop).aggregate(Avg('score'))
-    average = score_ave['score__avg']
-    average_rate = average / 5 * 100 if average else 0
+class ShopInfoView(View):
+    template_name = 'userapp/shop_info.html'
 
-    if request.method == 'GET':
+    def get(self, request, shop_id):
+        shop = get_object_or_404(Shop, pk=shop_id)
+        review_count = Review.objects.filter(shop=shop).count()
+        score_ave = Review.objects.filter(shop=shop).aggregate(Avg('score'))
+        average = score_ave['score__avg']
+        average_rate = average / 5 * 100 if average else 0
         review_form = ReviewForm()
         review_list = Review.objects.filter(shop=shop)
-    else:
+
+        params = {
+            'title': '店舗詳細',
+            'review_count': review_count,
+            'shop': shop,
+            'review_form': review_form,
+            'review_list': review_list,
+            'average': average,
+            'average_rate': average_rate,
+        }
+        return render(request, self.template_name, params)
+
+    def post(self, request, shop_id):
+        shop = get_object_or_404(Shop, pk=shop_id)
         form = ReviewForm(data=request.POST)
         score = request.POST['score']
         comment = request.POST['comment']
@@ -82,22 +94,10 @@ def ShopInfo(request, shop_id):
             review.comment = comment
             review.save()
             messages.success(request, 'レビューを投稿しました。')
-            return redirect('userapp:shop_info', shop_id)
+            return redirect('userapp:shop_info', shop_id=shop_id)
         else:
             messages.error(request, 'エラーがあります。')
-            return redirect('userapp:shop_info', shop_id)
-
-    params = {
-        'title': '店舗詳細',
-        'review_count': review_count,
-        'shop': shop,
-        'review_form': review_form,
-        'review_list': review_list,
-        'average': average,
-        'average_rate': average_rate,
-    }
-
-    return render(request, 'userapp/shop_info.html', params)
+            return redirect('userapp:shop_info', shop_id=shop_id)
 
 class SignUp(CreateView):
     form_class = SignUpForm
@@ -132,13 +132,8 @@ class SignUp(CreateView):
         return render(request, 'userapp/signup.html', {'form': form})
 
 class Login(LoginView):
-    form_class = LoginForm
+    form_class = EmailLoginForm
     template_name = 'userapp/login.html'
-
-class CustomLogoutView(View):
-    def get(self, request, *args, **kwargs):
-        logout(request)
-        return redirect('userapp:index')
 
 @method_decorator(login_required, name='dispatch')
 class SubscriptionView(TemplateView):

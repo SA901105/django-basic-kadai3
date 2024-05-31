@@ -47,11 +47,7 @@
             <p>　(まだ評価はありません。最初のレビューをお願いします！)</p>
             {% endif %}
         </div>
-        <div class="col-md-8">
-            <p>{{ restaurants_info.0.13|linebreaksbr }}</p>
-            <a href="{{ restaurants_info.0.3 }}" class="btn common-btn" target="_blank">お店ページ <i class="fas fa-external-link-alt"></i></a>
-            <a href="{{ restaurants_info.0.4 }}" class="btn common-btn" target="_blank">お店ページ(モバイル) <i class="fas fa-external-link-alt"></i></a>
-        </div>
+
     </div>
     <br>
     <br>
@@ -71,22 +67,6 @@
                     <td>TEL</td>
                     <td>{{ restaurants_info.0.8 }}</td>
                 </tr>
-                <tr>
-                    <td>アクセス</td>
-                    <td>{{ restaurants_info.0.9 }} <br>{{ restaurants_info.0.10 }}</td>
-                </tr>
-                <tr>
-                    <td>地図</td>
-                    <td>
-                        <div id="map" style="width:800px; height:600px"></div>
-                        <script type="text/javascript" charset="utf-8" src="https://map.yahooapis.jp/js/V1/jsapi?appid=dj00aiZpPW5wTlZaeWhtVnE0OCZzPWNvbnN1bWVyc2VjcmV0Jng9ZmI-"></script>
-                        <script type="text/javascript">
-                        window.onload = function(){
-                            var ymap = new Y.Map("map");
-                            ymap.drawMap(new Y.LatLng({{restaurants_info.0.11}}, {{ restaurants_info.0.12 }}), 17, Y.LayerSetId.NORMAL);
-                        }
-                        </script>
-                    </td>                       
                 </tr>
             </table>
         </div>

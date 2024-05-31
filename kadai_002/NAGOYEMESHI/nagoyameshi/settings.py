@@ -98,3 +98,9 @@ STRIPE_SECRET_KEY = 'your_stripe_secret_key'
 STRIPE_PUBLISHABLE_KEY = 'your_stripe_publishable_key'
 STRIPE_PRICE_ID = 'your_stripe_price_id'
 STRIPE_WEBHOOK_SECRET = 'your_stripe_webhook_secret'
+
+# Custom authentication backend
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # 既存の認証バックエンド
+    'userapp.backends.EmailBackend',  # 新しいメールアドレス認証バックエンド
+]

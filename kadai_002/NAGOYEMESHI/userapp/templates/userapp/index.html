@@ -12,7 +12,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/common.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/index.css' %}">
     <div id="fb-root"></div>
-    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v3.3&appId=800322963696452"></script>
+    <script async defer crossorigin="anonymous" src="https://connect.facebook.com/sdk.js#xfbml=1&version=v3.3&appId=800322963696452"></script>
     <!-- Twitterシェア追加　ここから -->
     <!-- <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false">Tweet</a> -->
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
@@ -26,14 +26,20 @@
         <div class="collapse navbar-collapse navbar-right" id="navbarNav">
             <ul class="navbar-nav ml-auto">
             {% if user.is_authenticated %}
-                <li>
-                    <a class="nav-item nav-link" href="{% url 'userapp:logout' %}">ログアウト</a>
+                <li class="nav-item">
+                    <form method="post" action="{% url 'userapp:logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="nav-link btn btn-link" style="display: inline; padding: 0; border: none; background: none;">ログアウト</button>
+                    </form>
                 </li>
-                {% else %}
+                <li class="nav-item">
+                    <a class="nav-item nav-link" href="{% url 'userapp:mypage' %}">マイページ</a>
+                </li>
+            {% else %}
                 <li class="nav-item">
                     <a class="nav-item nav-link" href="{% url 'userapp:login' %}">ログイン</a>
                 </li>
-                <li>
+                <li class="nav-item">
                     <a class="nav-item nav-link" href="{% url 'userapp:signup' %}">新規ユーザ登録</a>
                 </li>
             {% endif %}

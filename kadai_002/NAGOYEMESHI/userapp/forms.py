@@ -2,7 +2,6 @@ from django import forms
 from .models import Category, User, Review
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 
-
 class SearchForm(forms.Form):
     selected_category = forms.ModelChoiceField(
         label='業態',
@@ -15,7 +14,6 @@ class SearchForm(forms.Form):
         super().__init__(*args, **kwargs)
         selected_category = self.fields['selected_category']
 
-
 class SignUpForm(UserCreationForm):
     class Meta:
         model = User
@@ -27,20 +25,19 @@ class SignUpForm(UserCreationForm):
             field.widget.attrs['class'] = 'form-control'
             field.widget.attrs['placeholder'] = field.label
 
+class EmailLoginForm(AuthenticationForm):
+    username = forms.EmailField(label='Email', max_length=254)
 
-class LoginForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-control'
             field.widget.attrs['placeholder'] = field.label
 
-
 class ReviewForm(forms.ModelForm):
     class Meta:
         model = Review
         fields = ['score', 'comment']
-
 
 # サブスクリプション登録
 class SubscriptionForm(forms.Form):
