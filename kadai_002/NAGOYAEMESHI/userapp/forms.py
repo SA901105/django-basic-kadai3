@@ -57,9 +57,9 @@ class SubscriptionForm(forms.Form):
 class ReservationForm(forms.ModelForm):
     class Meta:
         model = Reservation
-        fields = ['datetime', 'number_of_people']
+        fields = ['date_time', 'num_people', 'shop']  # datetimeと人数を追加
         widgets = {
-            'datetime': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'date_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
 
 # レビュー編集フォーム

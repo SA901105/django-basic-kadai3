@@ -27,6 +27,7 @@ class Shop(models.Model):
     opening_hours = models.CharField("営業時間", max_length=255, blank=True, null=True)
     regular_holiday = models.CharField("定休日", max_length=255, blank=True, null=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name="カテゴリ")
+    description = models.TextField() # description フィールドを追加
 
     def __str__(self):
         return self.name
@@ -64,8 +65,8 @@ class Subscription(models.Model):
 class Reservation(models.Model):
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    datetime = models.DateTimeField("予約日時")
-    number_of_people = models.PositiveIntegerField("人数")
+    date_time = models.DateTimeField("予約日時")
+    num_people = models.PositiveIntegerField("人数")
 
     def __str__(self):
         return f'{self.shop.name} - {self.user.username} - {self.datetime}'

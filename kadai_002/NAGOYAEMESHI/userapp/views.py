@@ -31,17 +31,20 @@ class ShopInfoView(View):
         if 'review_submit' in request.POST:
             review_form = ReviewForm(data=request.POST)
             if review_form.is_valid():
-                review = Review()
-                review.shop = shop
-                review.user = request.user
-                review.score = review_form.cleaned_data['score']
-                review.comment = review_form.cleaned_data['comment']
-                review.save()
-                messages.success(request, 'レビューの投稿が完了しました。')
-                return redirect('userapp:shop_info', shop_id=shop_id)
+                # 既にレビューが存在するか確認
+                existing_review = Review.objects.filter(shop=shop, user=request.user).first()
+                if existing_review:
+                    messages.error(request, '既にこの店舗にレビューを投稿しています。')
+                else:
+                    review = Review()
+                    review.shop = shop
+                    review.user = request.user
+                    review.score = review_form.cleaned_data['score']
+                    review.comment = review_form.cleaned_data['comment']
+                    review.save()
+                    messages.success(request, 'レビューの投稿が完了しました。')
             else:
                 messages.error(request, 'レビューの投稿にエラーがあります。')
-                return redirect('userapp:shop_info', shop_id=shop_id)
         elif 'reservation_submit' in request.POST:
             reservation_form = ReservationForm(data=request.POST)
             if reservation_form.is_valid():
@@ -50,20 +53,16 @@ class ShopInfoView(View):
                 reservation.shop = shop
                 reservation.save()
                 messages.success(request, '予約が完了しました。')
-                return redirect('userapp:shop_info', shop_id=shop_id)
             else:
                 messages.error(request, '予約の投稿にエラーがあります。')
-                return redirect('userapp:shop_info', shop_id=shop_id)
         elif 'favorite_submit' in request.POST:
             Favorite.objects.create(shop=shop, user=request.user)
             messages.success(request, 'お気に入りに追加しました。')
-            return redirect('userapp:shop_info', shop_id=shop_id)
         elif 'unfavorite_submit' in request.POST:
             Favorite.objects.filter(shop=shop, user=request.user).delete()
             messages.success(request, 'お気に入りから削除しました。')
-            return redirect('userapp:shop_info', shop_id=shop_id)
-        else:
-            return self.render_shop_info(request, shop_id)
+
+        return redirect('userapp:shop_info', shop_id=shop_id)
 
     def render_shop_info(self, request, shop_id):
         shop = get_object_or_404(Shop, pk=shop_id)
@@ -146,6 +145,7 @@ class ReservationCreateView(LoginRequiredMixin, PaidMemberRequiredMixin, CreateV
 class ReservationListView(LoginRequiredMixin, PaidMemberRequiredMixin, ListView):
     model = Reservation
     template_name = 'userapp/reservation_list.html'
+    context_object_name = 'reservations'
 
     def get_queryset(self):
         return Reservation.objects.filter(user=self.request.user)
@@ -153,10 +153,14 @@ class ReservationListView(LoginRequiredMixin, PaidMemberRequiredMixin, ListView)
 class ReservationCancelView(LoginRequiredMixin, PaidMemberRequiredMixin, DeleteView):
     model = Reservation
     template_name = 'userapp/reservation_confirm_cancel.html'
+    success_url = reverse_lazy('userapp:reservations')
 
-    def get_success_url(self):
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        success_url = self.get_success_url()
+        self.object.delete()
         messages.success(self.request, '予約をキャンセルしました。')
-        return reverse('userapp:reservation_list')
+        return redirect(success_url)
 
 class ReviewEditView(LoginRequiredMixin, PaidMemberRequiredMixin, UpdateView):
     model = Review
@@ -276,7 +280,14 @@ class FavoritesView(LoginRequiredMixin, ListView):
     context_object_name = 'favorites'
 
     def get_queryset(self):
-        return Favorite.objects.filter(user=self.request.user)
+        return Favorite.objects.filter(user=self.request.user).select_related('shop')
+
+@login_required
+def unfavorite_shop(request, shop_id):
+    shop = get_object_or_404(Shop, id=shop_id)
+    Favorite.objects.filter(shop=shop, user=request.user).delete()
+    messages.success(request, 'お気に入りから削除しました。')
+    return redirect('userapp:favorites')
 
 class ReservationsView(LoginRequiredMixin, ListView):
     model = Reservation
@@ -291,9 +302,14 @@ class PaymentMethodView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        subscription = Subscription.objects.get(user=self.request.user)
-        context['subscription'] = subscription
+        try:
+            subscription = Subscription.objects.get(user=self.request.user)
+            context['subscription'] = subscription
+        except Subscription.DoesNotExist:
+            context['subscription'] = None
+            messages.error(self.request, 'サブスクリプションが存在しません。')
         return context
+
 
 class CancelSubscriptionView(LoginRequiredMixin, TemplateView):
     template_name = 'userapp/cancel_subscription.html'
