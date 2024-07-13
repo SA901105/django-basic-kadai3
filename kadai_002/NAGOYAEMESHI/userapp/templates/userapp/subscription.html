@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>サブスクリプション情報</h1>
+<p>ここにサブスクリプションに関する情報を表示します。</p>
+
+<!-- メッセージ表示 -->
+{% if messages %}
+<div class="container" style="margin-top:1rem;">
+    <div class="message">
+        {% for message in messages %}
+            {% if message.tags == "success" %}
+                <div class="alert alert-success" role="alert">
+            {% elif message.tags == "error" %}
+                <div class="alert alert-danger" role="alert">
+            {% else %}
+                <div class="alert alert-info" role="alert">
+            {% endif %}
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

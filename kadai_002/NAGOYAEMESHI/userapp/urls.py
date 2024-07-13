@@ -3,10 +3,10 @@ from django.contrib.auth.views import (
     LogoutView, PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 )
 from .views import (
-    IndexView, SignUp, Login, Search,
+    IndexView, SignUpView, Login, Search,
     SubscriptionView, stripe_webhook, MyPageView, ProfileView,
     ReservationsView, FavoritesView, PaymentMethodView, CancelSubscriptionView,
-    ShopInfoView, ProfileEditView, ReservationCancelView,  # <- ReservationCancelView を追加
+    ShopInfoView, ProfileEditView, ReservationCancelView,
     unfavorite_shop
 )
 
@@ -14,7 +14,7 @@ app_name = 'userapp'
 
 urlpatterns = [
     path('', IndexView.as_view(), name='index'),
-    path('signup/', SignUp.as_view(), name='signup'),
+    path('signup/', SignUpView.as_view(), name='signup'),  # 修正点
     path('login/', Login.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('search/', Search, name='search'),
@@ -25,13 +25,13 @@ urlpatterns = [
     path('mypage/profile/', ProfileView.as_view(), name='profile'),
     path('mypage/profile/edit/', ProfileEditView.as_view(), name='profile_edit'),
     path('mypage/reservations/', ReservationsView.as_view(), name='reservations'),
-    path('mypage/reservations/cancel/<int:pk>/', ReservationCancelView.as_view(), name='reservation_cancel'),  # <- 予約キャンセル用のURLパターンを追加
+    path('mypage/reservations/cancel/<int:pk>/', ReservationCancelView.as_view(), name='reservation_cancel'),
     path('mypage/favorites/', FavoritesView.as_view(), name='favorites'),
-    path('mypage/favorites/unfavorite/<int:shop_id>/', unfavorite_shop, name='unfavorite_shop'),  # <- お気に入り解除用のURLパターンを追加
+    path('mypage/favorites/unfavorite/<int:shop_id>/', unfavorite_shop, name='unfavorite_shop'),
     path('mypage/payment_method/', PaymentMethodView.as_view(), name='payment_method'),
     path('mypage/cancel_subscription/', CancelSubscriptionView.as_view(), name='cancel_subscription'),
 
-    # パスワードリセット関連のURLパターンを追加
+    # パスワードリセット関連のURLパターン
     path('password_reset/', PasswordResetView.as_view(template_name='userapp/password_reset_form.html'), name='password_reset'),
     path('password_reset/done/', PasswordResetDoneView.as_view(template_name='userapp/password_reset_done.html'), name='password_reset_done'),
     path('reset/<uidb64>/<token>/', PasswordResetConfirmView.as_view(template_name='userapp/password_reset_confirm.html'), name='password_reset_confirm'),

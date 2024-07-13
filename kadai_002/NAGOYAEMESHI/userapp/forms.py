@@ -2,7 +2,9 @@ from django import forms
 from .models import Category, Review, Reservation
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, UserChangeForm
 from django.conf import settings
-from django.contrib.auth import get_user_model  # 追加
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 SCORE_CHOICES = [
     (1, '★'),
@@ -26,7 +28,7 @@ class SearchForm(forms.Form):
 
 class SignUpForm(UserCreationForm):
     class Meta:
-        model = get_user_model()  # 修正
+        model = User
         fields = ['username', 'email', 'password1', 'password2']
 
     def __init__(self, *args, **kwargs):
@@ -75,7 +77,7 @@ class ReviewEditForm(forms.ModelForm):
 # プロフィール編集フォーム
 class ProfileEditForm(UserChangeForm):
     class Meta:
-        model = get_user_model()
+        model = User
         fields = [
             'username', 'email', 'postal_code', 'address', 
             'phone_number', 'birthday', 'job'

@@ -14,9 +14,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
-from django import forms
-from .mixins import PaidMemberRequiredMixin
 from django.urls import reverse, reverse_lazy
+from .mixins import PaidMemberRequiredMixin
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -34,7 +33,7 @@ class ShopInfoView(View):
                 # 既にレビューが存在するか確認
                 existing_review = Review.objects.filter(shop=shop, user=request.user).first()
                 if existing_review:
-                    messages.error(request, '既にこの店舗にレビューを投稿しています。')
+                    messages.error(request, '既にこの店舗にレビューを投稿しています。', extra_tags='review')
                 else:
                     review = Review()
                     review.shop = shop
@@ -42,9 +41,9 @@ class ShopInfoView(View):
                     review.score = review_form.cleaned_data['score']
                     review.comment = review_form.cleaned_data['comment']
                     review.save()
-                    messages.success(request, 'レビューの投稿が完了しました。')
+                    messages.success(request, 'レビューの投稿が完了しました。', extra_tags='review')
             else:
-                messages.error(request, 'レビューの投稿にエラーがあります。')
+                messages.error(request, 'レビューの投稿にエラーがあります。', extra_tags='review')
         elif 'reservation_submit' in request.POST:
             reservation_form = ReservationForm(data=request.POST)
             if reservation_form.is_valid():
@@ -52,17 +51,17 @@ class ShopInfoView(View):
                 reservation.user = request.user
                 reservation.shop = shop
                 reservation.save()
-                messages.success(request, '予約が完了しました。')
+                messages.success(request, '予約が完了しました。', extra_tags='reservation')
             else:
-                messages.error(request, '予約の投稿にエラーがあります。')
+                messages.error(request, '予約の投稿にエラーがあります。', extra_tags='reservation')
         elif 'favorite_submit' in request.POST:
             Favorite.objects.create(shop=shop, user=request.user)
-            messages.success(request, 'お気に入りに追加しました。')
+            messages.success(request, 'お気に入りに追加しました。', extra_tags='favorite')
         elif 'unfavorite_submit' in request.POST:
             Favorite.objects.filter(shop=shop, user=request.user).delete()
-            messages.success(request, 'お気に入りから削除しました。')
+            messages.success(request, 'お気に入りから削除しました。', extra_tags='favorite')
 
-        return redirect('userapp:shop_info', shop_id=shop_id)
+        return redirect('userapp:subscription')
 
     def render_shop_info(self, request, shop_id):
         shop = get_object_or_404(Shop, pk=shop_id)
@@ -110,21 +109,26 @@ class IndexView(TemplateView):
 
 def Search(request):
     total_hit_count = 0
-    restaurants_info = []
+    Shop_info = []
 
     if request.method == 'GET':
         searchform = SearchForm(request.GET)
 
         if searchform.is_valid():
-            category_l = request.GET.get('selected_category', '')
+            category_id = request.GET.get('category_l', '')
             freeword = request.GET.get('freeword', '')
-            query = Shop.objects.filter(name__icontains=freeword, category__category_l=category_l)[:10]
+
+            if category_id:
+                query = Shop.objects.filter(name__icontains=freeword, category_id=category_id)[:10]
+            else:
+                query = Shop.objects.filter(name__icontains=freeword)[:10]
+
             total_hit_count = query.count()
-            restaurants_info = query
+            shop_info = query
 
     params = {
         'total_hit_count': total_hit_count,
-        'restaurants_info': restaurants_info,
+        'shop_info': shop_info,
     }
 
     return render(request, 'userapp/search.html', params)
@@ -136,30 +140,23 @@ class ReservationCreateView(LoginRequiredMixin, PaidMemberRequiredMixin, CreateV
 
     def form_valid(self, form):
         form.instance.user = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        messages.success(self.request, '予約が完了しました。', extra_tags='reservation')
+        return response
 
     def get_success_url(self):
-        messages.success(self.request, '予約が完了しました。')
-        return reverse('userapp:shop_info', kwargs={'shop_id': self.object.shop.id})
+        return reverse('userapp:subscription')
 
-class ReservationListView(LoginRequiredMixin, PaidMemberRequiredMixin, ListView):
-    model = Reservation
-    template_name = 'userapp/reservation_list.html'
-    context_object_name = 'reservations'
-
-    def get_queryset(self):
-        return Reservation.objects.filter(user=self.request.user)
-
-class ReservationCancelView(LoginRequiredMixin, PaidMemberRequiredMixin, DeleteView):
+class ReservationCancelView(LoginRequiredMixin, DeleteView):
     model = Reservation
     template_name = 'userapp/reservation_confirm_cancel.html'
-    success_url = reverse_lazy('userapp:reservations')
+    success_url = reverse_lazy('userapp:subscription')
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
         success_url = self.get_success_url()
         self.object.delete()
-        messages.success(self.request, '予約をキャンセルしました。')
+        messages.success(self.request, '予約をキャンセルしました。', extra_tags='reservation')
         return redirect(success_url)
 
 class ReviewEditView(LoginRequiredMixin, PaidMemberRequiredMixin, UpdateView):
@@ -168,16 +165,16 @@ class ReviewEditView(LoginRequiredMixin, PaidMemberRequiredMixin, UpdateView):
     template_name = 'userapp/review_form.html'
 
     def get_success_url(self):
-        messages.success(self.request, 'レビューを更新しました。')
-        return reverse('userapp:shop_info', kwargs={'shop_id': self.object.shop.id})
+        messages.success(self.request, 'レビューを更新しました。', extra_tags='review')
+        return reverse('userapp:subscription')
 
 class ReviewDeleteView(LoginRequiredMixin, PaidMemberRequiredMixin, DeleteView):
     model = Review
     template_name = 'userapp/review_confirm_delete.html'
 
     def get_success_url(self):
-        messages.success(self.request, 'レビューを削除しました。')
-        return reverse('userapp:shop_info', kwargs={'shop_id': self.object.shop.id})
+        messages.success(self.request, 'レビューを削除しました。', extra_tags='review')
+        return reverse('userapp:subscription')
 
 class SignUp(CreateView):
     form_class = SignUpForm
@@ -221,8 +218,12 @@ class SubscriptionView(TemplateView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        subscription = Subscription.objects.get(user=self.request.user)
-        context['subscription'] = subscription
+        try:
+            subscription = Subscription.objects.get(user=self.request.user)
+            context['subscription'] = subscription
+        except Subscription.DoesNotExist:
+            context['subscription'] = None
+            messages.error(self.request, 'サブスクリプションが存在しません。')
         return context
 
 @csrf_exempt
@@ -286,8 +287,8 @@ class FavoritesView(LoginRequiredMixin, ListView):
 def unfavorite_shop(request, shop_id):
     shop = get_object_or_404(Shop, id=shop_id)
     Favorite.objects.filter(shop=shop, user=request.user).delete()
-    messages.success(request, 'お気に入りから削除しました。')
-    return redirect('userapp:favorites')
+    messages.success(request, 'お気に入りから削除しました。', extra_tags='favorite')
+    return redirect('userapp:subscription')
 
 class ReservationsView(LoginRequiredMixin, ListView):
     model = Reservation
@@ -310,7 +311,6 @@ class PaymentMethodView(LoginRequiredMixin, TemplateView):
             messages.error(self.request, 'サブスクリプションが存在しません。')
         return context
 
-
 class CancelSubscriptionView(LoginRequiredMixin, TemplateView):
     template_name = 'userapp/cancel_subscription.html'
 
@@ -319,5 +319,16 @@ class CancelSubscriptionView(LoginRequiredMixin, TemplateView):
         stripe.Subscription.delete(subscription.stripe_subscription_id)
         subscription.active = False
         subscription.save()
-        messages.success(request, '有料会員を解約しました。')
-        return redirect('userapp:mypage')
+        messages.success(request, '有料会員を解約しました。', extra_tags='subscription')
+        return redirect('userapp:subscription')
+
+# 新規作成用
+class SignUpView(CreateView):
+    form_class = SignUpForm
+    template_name = 'userapp/signup.html'
+
+    def form_valid(self, form):
+        user = form.save()
+        backend = 'django.contrib.auth.backends.ModelBackend'  # ここで適切なバックエンドを指定します
+        login(self.request, user, backend=backend)
+        return redirect('userapp:index')
