@@ -19,7 +19,6 @@ from .mixins import PaidMemberRequiredMixin
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
-
 # レビュー投稿、お気に入り追加、店舗予約
 class ShopInfoView(View):
     template_name = 'userapp/shop_info.html'
@@ -29,6 +28,21 @@ class ShopInfoView(View):
 
     def post(self, request, shop_id):
         shop = get_object_or_404(Shop, pk=shop_id)
+        if not request.user.is_authenticated:
+            messages.error(request, 'この操作を行うにはログインが必要です。', extra_tags='login')
+            return redirect('userapp:login')
+
+        try:
+            subscription = Subscription.objects.get(user=request.user)
+            if not subscription.active:
+                raise Subscription.DoesNotExist
+        except Subscription.DoesNotExist:
+            # メッセージは一度だけ追加する
+            if not any(message.message == 'この機能を使用するには有料会員登録が必要です。' for message in messages.get_messages(request)):
+                messages.error(request, 'この機能を使用するには有料会員登録が必要です。', extra_tags='subscription')
+            return redirect('userapp:subscription')
+
+        # 各フォームの処理
         if 'review_submit' in request.POST:
             review_form = ReviewForm(data=request.POST)
             if review_form.is_valid():
@@ -74,7 +88,9 @@ class ShopInfoView(View):
         review_list = Review.objects.filter(shop=shop)
         reservation_form = ReservationForm(initial={'shop': shop})
 
-        is_favorite = Favorite.objects.filter(shop=shop, user=request.user).exists()
+        is_favorite = False
+        if request.user.is_authenticated:
+            is_favorite = Favorite.objects.filter(shop=shop, user=request.user).exists()
 
         params = {
             'title': '店舗詳細',
@@ -224,7 +240,7 @@ class SubscriptionView(TemplateView):
             context['subscription'] = subscription
         except Subscription.DoesNotExist:
             context['subscription'] = None
-            messages.error(self.request, 'サブスクリプションが存在しません。')
+            messages.error(self.request, 'この機能を使用するには有料会員登録が必要です')
         return context
 
 @csrf_exempt
@@ -274,6 +290,17 @@ class ProfileView(LoginRequiredMixin, TemplateView):
 
 class MyPageView(LoginRequiredMixin, TemplateView):
     template_name = 'userapp/mypage.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        try:
+            subscription = Subscription.objects.get(user=self.request.user)
+            context['subscription'] = subscription
+            context['is_free_member'] = not subscription.active
+        except Subscription.DoesNotExist:
+            context['subscription'] = None
+            context['is_free_member'] = True  # サブスクリプションがない場合は無料会員
+        return context
 
 # 新しいビューの追加
 class FavoritesView(LoginRequiredMixin, ListView):
@@ -309,21 +336,20 @@ class PaymentMethodView(LoginRequiredMixin, TemplateView):
             context['subscription'] = subscription
         except Subscription.DoesNotExist:
             context['subscription'] = None
-            messages.error(self.request, 'サブスクリプションが存在しません。')
+            messages.error(self.request, 'この機能を使用するには有料会員登録が必要です')
         return context
 
 class CancelSubscriptionView(LoginRequiredMixin, TemplateView):
     template_name = 'userapp/cancel_subscription.html'
 
     def post(self, request, *args, **kwargs):
-<<<<<<< HEAD:kadai_002/NAGOYAEMESHI/userapp/views.py
         subscription = Subscription.objects.get(user=request.user)
         stripe.Subscription.delete(subscription.stripe_subscription_id)
         subscription.active = False
         subscription.save()
         messages.success(request, '有料会員を解約しました。', extra_tags='subscription')
         return redirect('userapp:subscription')
-=======
+    
         try:
             subscription = Subscription.objects.get(user=request.user)
             stripe.Subscription.delete(subscription.stripe_subscription_id)
@@ -338,8 +364,7 @@ class CancelSubscriptionView(LoginRequiredMixin, TemplateView):
             messages.error(request, f'予期しないエラーが発生しました: {str(e)}')
 
         return redirect('userapp:mypage')
->>>>>>> ae9d671 (sabusucription（有料会員）がうまく機能しているかがわかりません):kadai_002_2/NAGOYAEMESHI/userapp/views.py
-
+    
 # 新規作成用
 class SignUpView(CreateView):
     form_class = SignUpForm
