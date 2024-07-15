@@ -19,6 +19,10 @@ from .mixins import PaidMemberRequiredMixin
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
 # レビュー投稿、お気に入り追加、店舗予約
 class ShopInfoView(View):
     template_name = 'userapp/shop_info.html'
@@ -28,6 +32,7 @@ class ShopInfoView(View):
 
     def post(self, request, shop_id):
         shop = get_object_or_404(Shop, pk=shop_id)
+<<<<<<< HEAD
         if not request.user.is_authenticated:
             messages.error(request, 'この操作を行うにはログインが必要です。', extra_tags='login')
             return redirect('userapp:login')
@@ -43,6 +48,8 @@ class ShopInfoView(View):
             return redirect('userapp:subscription')
 
         # 各フォームの処理
+=======
+>>>>>>> origin/main
         if 'review_submit' in request.POST:
             review_form = ReviewForm(data=request.POST)
             if review_form.is_valid():
@@ -88,9 +95,13 @@ class ShopInfoView(View):
         review_list = Review.objects.filter(shop=shop)
         reservation_form = ReservationForm(initial={'shop': shop})
 
+<<<<<<< HEAD
         is_favorite = False
         if request.user.is_authenticated:
             is_favorite = Favorite.objects.filter(shop=shop, user=request.user).exists()
+=======
+        is_favorite = Favorite.objects.filter(shop=shop, user=request.user).exists()
+>>>>>>> origin/main
 
         params = {
             'title': '店舗詳細',
@@ -240,7 +251,11 @@ class SubscriptionView(TemplateView):
             context['subscription'] = subscription
         except Subscription.DoesNotExist:
             context['subscription'] = None
+<<<<<<< HEAD
             messages.error(self.request, 'この機能を使用するには有料会員登録が必要です')
+=======
+            messages.error(self.request, 'サブスクリプションが存在しません。')
+>>>>>>> origin/main
         return context
 
 @csrf_exempt
@@ -290,6 +305,7 @@ class ProfileView(LoginRequiredMixin, TemplateView):
 
 class MyPageView(LoginRequiredMixin, TemplateView):
     template_name = 'userapp/mypage.html'
+<<<<<<< HEAD
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -301,6 +317,8 @@ class MyPageView(LoginRequiredMixin, TemplateView):
             context['subscription'] = None
             context['is_free_member'] = True  # サブスクリプションがない場合は無料会員
         return context
+=======
+>>>>>>> origin/main
 
 # 新しいビューの追加
 class FavoritesView(LoginRequiredMixin, ListView):
@@ -336,13 +354,18 @@ class PaymentMethodView(LoginRequiredMixin, TemplateView):
             context['subscription'] = subscription
         except Subscription.DoesNotExist:
             context['subscription'] = None
+<<<<<<< HEAD
             messages.error(self.request, 'この機能を使用するには有料会員登録が必要です')
+=======
+            messages.error(self.request, 'サブスクリプションが存在しません。')
+>>>>>>> origin/main
         return context
 
 class CancelSubscriptionView(LoginRequiredMixin, TemplateView):
     template_name = 'userapp/cancel_subscription.html'
 
     def post(self, request, *args, **kwargs):
+<<<<<<< HEAD
         subscription = Subscription.objects.get(user=request.user)
         stripe.Subscription.delete(subscription.stripe_subscription_id)
         subscription.active = False
@@ -350,6 +373,8 @@ class CancelSubscriptionView(LoginRequiredMixin, TemplateView):
         messages.success(request, '有料会員を解約しました。', extra_tags='subscription')
         return redirect('userapp:subscription')
     
+=======
+>>>>>>> origin/main
         try:
             subscription = Subscription.objects.get(user=request.user)
             stripe.Subscription.delete(subscription.stripe_subscription_id)
@@ -364,7 +389,11 @@ class CancelSubscriptionView(LoginRequiredMixin, TemplateView):
             messages.error(request, f'予期しないエラーが発生しました: {str(e)}')
 
         return redirect('userapp:mypage')
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> origin/main
 # 新規作成用
 class SignUpView(CreateView):
     form_class = SignUpForm
