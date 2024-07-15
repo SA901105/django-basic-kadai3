@@ -20,6 +20,7 @@ from .mixins import PaidMemberRequiredMixin
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 # レビュー投稿、お気に入り追加、店舗予約
+# レビュー投稿、お気に入り追加、店舗予約
 class ShopInfoView(View):
     template_name = 'userapp/shop_info.html'
 
@@ -37,10 +38,74 @@ class ShopInfoView(View):
             if not subscription.active:
                 raise Subscription.DoesNotExist
         except Subscription.DoesNotExist:
-            # メッセージは一度だけ追加する
-            if not any(message.message == 'この機能を使用するには有料会員登録が必要です。' for message in messages.get_messages(request)):
-                messages.error(request, 'この機能を使用するには有料会員登録が必要です。', extra_tags='subscription')
             return redirect('userapp:subscription')
+
+        # 各フォームの処理
+        if 'review_submit' in request.POST:
+            review_form = ReviewForm(data=request.POST)
+            if review_form.is_valid():
+                existing_review = Review.objects.filter(shop=shop, user=request.user).first()
+                if existing_review:
+                    messages.error(request, '既にこの店舗にレビューを投稿しています。', extra_tags='review')
+                else:
+                    review = Review()
+                    review.shop = shop
+                    review.user = request.user
+                    review.score = review_form.cleaned_data['score']
+                    review.comment = review_form.cleaned_data['comment']
+                    review.save()
+                    messages.success(request, 'レビューの投稿が完了しました。', extra_tags='review')
+            else:
+                messages.error(request, 'レビューの投稿にエラーがあります。', extra_tags='review')
+            return redirect('userapp:shop_info', shop_id=shop_id)
+        elif 'reservation_submit' in request.POST:
+            reservation_form = ReservationForm(data=request.POST)
+            if reservation_form.is_valid():
+                reservation = reservation_form.save(commit=False)
+                reservation.user = request.user
+                reservation.shop = shop
+                reservation.save()
+                messages.success(request, '予約が完了しました。', extra_tags='reservation')
+            else:
+                messages.error(request, '予約の投稿にエラーがあります。', extra_tags='reservation')
+            return redirect('userapp:shop_info', shop_id=shop_id)
+        elif 'favorite_submit' in request.POST:
+            Favorite.objects.create(shop=shop, user=request.user)
+            messages.success(request, 'お気に入りに追加しました。', extra_tags='favorite')
+            return redirect('userapp:shop_info', shop_id=shop_id)
+        elif 'unfavorite_submit' in request.POST:
+            Favorite.objects.filter(shop=shop, user=request.user).delete()
+            messages.success(request, 'お気に入りから削除しました。', extra_tags='favorite')
+            return redirect('userapp:shop_info', shop_id=shop_id)
+
+        return redirect('userapp:shop_info', shop_id=shop_id)
+
+    def render_shop_info(self, request, shop_id):
+        shop = get_object_or_404(Shop, pk=shop_id)
+        review_count = Review.objects.filter(shop=shop).count()
+        score_ave = Review.objects.filter(shop=shop).aggregate(Avg('score'))
+        average = score_ave['score__avg']
+        average_rate = average / 5 * 100 if average else 0
+        review_form = ReviewForm()
+        review_list = Review.objects.filter(shop=shop)
+        reservation_form = ReservationForm(initial={'shop': shop})
+
+        is_favorite = False
+        if request.user.is_authenticated:
+            is_favorite = Favorite.objects.filter(shop=shop, user=request.user).exists()
+
+        params = {
+            'title': '店舗詳細',
+            'review_count': review_count,
+            'shop': shop,
+            'review_form': review_form,
+            'review_list': review_list,
+            'average': average,
+            'average_rate': average_rate,
+            'reservation_form': reservation_form,
+            'is_favorite': is_favorite
+        }
+        return render(request, self.template_name, params)
 
         # 各フォームの処理
         if 'review_submit' in request.POST:
@@ -264,7 +329,7 @@ def stripe_webhook(request):
         subscription = Subscription.objects.get(user=user)
         subscription.stripe_customer_id = session['customer']
         subscription.stripe_subscription_id = session['subscription']
-        subscription.active = True
+        subscription.active = True  # ここでアクティベーションを行う
         subscription.save()
 
     return JsonResponse({'status': 'success'}, status=200)
@@ -290,14 +355,16 @@ class ProfileView(LoginRequiredMixin, TemplateView):
 
 class MyPageView(LoginRequiredMixin, TemplateView):
     template_name = 'userapp/mypage.html'
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         try:
             subscription = Subscription.objects.get(user=self.request.user)
             context['subscription'] = subscription
+            print("subscription existed")
         except Subscription.DoesNotExist:
             context['subscription'] = None
+            print("subscription not existed")
         return context
 
 # 新しいビューの追加
