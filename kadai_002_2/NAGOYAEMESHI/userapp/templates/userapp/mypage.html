@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 {% extends "base.html" %}
 
 {% block content %}
@@ -17,35 +16,8 @@
         {% endif %}
     </ul>
 </div>
-=======
-{% extends 'base.html' %}
-
-{% block content %}
-<div class="container">
-    <div class="row">
-        <div class="col-md-3">
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'userapp:profile' %}">会員情報</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'userapp:reservations' %}">予約一覧</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'userapp:favorites' %}">お気に入り一覧</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'userapp:payment_method' %}">お支払い方法</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'userapp:cancel_subscription' %}">有料プラン解約</a>
-                </li>
-            </ul>
-        </div>
->>>>>>> origin/main
-        <div class="col-md-9">
-            {% block mypage_content %}{% endblock %}
-        </div>
-    </div>
+<div class="col-md-9">
+    {% block mypage_content %}{% endblock %}
+</div>
 </div>
 {% endblock %}
