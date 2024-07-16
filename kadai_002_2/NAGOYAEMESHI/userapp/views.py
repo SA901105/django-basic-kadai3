@@ -191,43 +191,34 @@ class IndexView(TemplateView):
 
 def Search(request):
     total_hit_count = 0
-    Shop_info = []
+    shop_info = []  # 修正: 変数名を小文字に統一
 
     if request.method == 'GET':
         searchform = SearchForm(request.GET)
 
         if searchform.is_valid():
-            category_id = request.GET.get('category_l', '')
+            category_id = request.GET.get('selected_category', '')  # 修正ポイント: 'category_l'から'selected_category'へ変更
             freeword = request.GET.get('freeword', '')
 
+            query = Shop.objects.all()  # 初期クエリを全件に設定
+
             if category_id:
-                query = Shop.objects.filter(name__icontains=freeword, category_id=category_id)[:10]
-            else:
-                query = Shop.objects.filter(name__icontains=freeword)[:10]
+                query = query.filter(category_id=category_id)
+            
+            if freeword:
+                query = query.filter(name__icontains=freeword)
 
             total_hit_count = query.count()
-            shop_info = query
+            shop_info = query[:10]
 
     params = {
         'total_hit_count': total_hit_count,
         'shop_info': shop_info,
+        'searchform': searchform,
     }
 
     return render(request, 'userapp/search.html', params)
 
-class ReservationCreateView(LoginRequiredMixin, PaidMemberRequiredMixin, CreateView):
-    model = Reservation
-    form_class = ReservationForm
-    template_name = 'userapp/reservation_form.html'
-
-    def form_valid(self, form):
-        form.instance.user = self.request.user
-        response = super().form_valid(form)
-        messages.success(self.request, '予約が完了しました。', extra_tags='reservation')
-        return response
-
-    def get_success_url(self):
-        return reverse('userapp:subscription')
 
 class ReservationCancelView(LoginRequiredMixin, DeleteView):
     model = Reservation
