@@ -19,8 +19,7 @@ from .mixins import PaidMemberRequiredMixin
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
-# レビュー投稿、お気に入り追加、店舗予約
-# レビュー投稿、お気に入り追加、店舗予約
+# 店舗情報の表示および操作を行うビュー
 class ShopInfoView(View):
     template_name = 'userapp/shop_info.html'
 
@@ -107,69 +106,7 @@ class ShopInfoView(View):
         }
         return render(request, self.template_name, params)
 
-        # 各フォームの処理
-        if 'review_submit' in request.POST:
-            review_form = ReviewForm(data=request.POST)
-            if review_form.is_valid():
-                existing_review = Review.objects.filter(shop=shop, user=request.user).first()
-                if existing_review:
-                    messages.error(request, '既にこの店舗にレビューを投稿しています。', extra_tags='review')
-                else:
-                    review = Review()
-                    review.shop = shop
-                    review.user = request.user
-                    review.score = review_form.cleaned_data['score']
-                    review.comment = review_form.cleaned_data['comment']
-                    review.save()
-                    messages.success(request, 'レビューの投稿が完了しました。', extra_tags='review')
-            else:
-                messages.error(request, 'レビューの投稿にエラーがあります。', extra_tags='review')
-        elif 'reservation_submit' in request.POST:
-            reservation_form = ReservationForm(data=request.POST)
-            if reservation_form.is_valid():
-                reservation = reservation_form.save(commit=False)
-                reservation.user = request.user
-                reservation.shop = shop
-                reservation.save()
-                messages.success(request, '予約が完了しました。', extra_tags='reservation')
-            else:
-                messages.error(request, '予約の投稿にエラーがあります。', extra_tags='reservation')
-        elif 'favorite_submit' in request.POST:
-            Favorite.objects.create(shop=shop, user=request.user)
-            messages.success(request, 'お気に入りに追加しました。', extra_tags='favorite')
-        elif 'unfavorite_submit' in request.POST:
-            Favorite.objects.filter(shop=shop, user=request.user).delete()
-            messages.success(request, 'お気に入りから削除しました。', extra_tags='favorite')
-
-        return redirect('userapp:subscription')
-
-    def render_shop_info(self, request, shop_id):
-        shop = get_object_or_404(Shop, pk=shop_id)
-        review_count = Review.objects.filter(shop=shop).count()
-        score_ave = Review.objects.filter(shop=shop).aggregate(Avg('score'))
-        average = score_ave['score__avg']
-        average_rate = average / 5 * 100 if average else 0
-        review_form = ReviewForm()
-        review_list = Review.objects.filter(shop=shop)
-        reservation_form = ReservationForm(initial={'shop': shop})
-
-        is_favorite = False
-        if request.user.is_authenticated:
-            is_favorite = Favorite.objects.filter(shop=shop, user=request.user).exists()
-
-        params = {
-            'title': '店舗詳細',
-            'review_count': review_count,
-            'shop': shop,
-            'review_form': review_form,
-            'review_list': review_list,
-            'average': average,
-            'average_rate': average_rate,
-            'reservation_form': reservation_form,
-            'is_favorite': is_favorite
-        }
-        return render(request, self.template_name, params)
-
+# ホームページの表示
 class IndexView(TemplateView):
     template_name = 'userapp/index.html'
 
@@ -189,18 +126,19 @@ class IndexView(TemplateView):
 
         return context
 
+# 検索機能のビュー
 def Search(request):
     total_hit_count = 0
-    shop_info = []  # 修正: 変数名を小文字に統一
+    shop_info = []
 
     if request.method == 'GET':
         searchform = SearchForm(request.GET)
 
         if searchform.is_valid():
-            category_id = request.GET.get('selected_category', '')  # 修正ポイント: 'category_l'から'selected_category'へ変更
+            category_id = request.GET.get('selected_category', '')
             freeword = request.GET.get('freeword', '')
 
-            query = Shop.objects.all()  # 初期クエリを全件に設定
+            query = Shop.objects.all()
 
             if category_id:
                 query = query.filter(category_id=category_id)
@@ -219,7 +157,7 @@ def Search(request):
 
     return render(request, 'userapp/search.html', params)
 
-
+# 予約キャンセルのビュー
 class ReservationCancelView(LoginRequiredMixin, DeleteView):
     model = Reservation
     template_name = 'userapp/reservation_confirm_cancel.html'
@@ -232,6 +170,7 @@ class ReservationCancelView(LoginRequiredMixin, DeleteView):
         messages.success(self.request, '予約をキャンセルしました。', extra_tags='reservation')
         return redirect(success_url)
 
+# レビュー編集のビュー
 class ReviewEditView(LoginRequiredMixin, PaidMemberRequiredMixin, UpdateView):
     model = Review
     form_class = ReviewEditForm
@@ -241,6 +180,7 @@ class ReviewEditView(LoginRequiredMixin, PaidMemberRequiredMixin, UpdateView):
         messages.success(self.request, 'レビューを更新しました。', extra_tags='review')
         return reverse('userapp:subscription')
 
+# レビュー削除のビュー
 class ReviewDeleteView(LoginRequiredMixin, PaidMemberRequiredMixin, DeleteView):
     model = Review
     template_name = 'userapp/review_confirm_delete.html'
@@ -249,6 +189,7 @@ class ReviewDeleteView(LoginRequiredMixin, PaidMemberRequiredMixin, DeleteView):
         messages.success(self.request, 'レビューを削除しました。', extra_tags='review')
         return reverse('userapp:subscription')
 
+# 新規ユーザー登録のビュー
 class SignUp(CreateView):
     form_class = SignUpForm
     template_name = 'userapp/signup.html'
@@ -281,10 +222,12 @@ class SignUp(CreateView):
             return redirect(checkout_session.url)
         return render(request, 'userapp/signup.html', {'form': form})
 
+# ログインのビュー
 class Login(LoginView):
     form_class = EmailLoginForm
     template_name = 'userapp/login.html'
 
+# サブスクリプション情報の表示ビュー
 @method_decorator(login_required, name='dispatch')
 class SubscriptionView(TemplateView):
     template_name = 'userapp/subscription.html'
@@ -299,6 +242,7 @@ class SubscriptionView(TemplateView):
             messages.error(self.request, 'この機能を使用するには有料会員登録が必要です')
         return context
 
+# Stripe Webhookの処理
 @csrf_exempt
 def stripe_webhook(request):
     payload = request.body
@@ -320,11 +264,12 @@ def stripe_webhook(request):
         subscription = Subscription.objects.get(user=user)
         subscription.stripe_customer_id = session['customer']
         subscription.stripe_subscription_id = session['subscription']
-        subscription.active = True  # ここでアクティベーションを行う
+        subscription.active = True
         subscription.save()
 
     return JsonResponse({'status': 'success'}, status=200)
 
+# プロフィール編集のビュー
 @method_decorator(login_required, name='dispatch')
 class ProfileEditView(UpdateView):
     model = get_user_model()
@@ -338,12 +283,15 @@ class ProfileEditView(UpdateView):
         messages.success(self.request, 'プロフィールを更新しました。')
         return reverse('userapp:profile')
 
+# ログアウトのビュー
 class Logout(LogoutView):
     template_name = 'userapp/logout.html'
 
+# プロフィール表示のビュー
 class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = 'userapp/profile.html'
 
+# マイページ表示のビュー
 class MyPageView(LoginRequiredMixin, TemplateView):
     template_name = 'userapp/mypage.html'
 
@@ -352,13 +300,11 @@ class MyPageView(LoginRequiredMixin, TemplateView):
         try:
             subscription = Subscription.objects.get(user=self.request.user)
             context['subscription'] = subscription
-            print("subscription existed")
         except Subscription.DoesNotExist:
             context['subscription'] = None
-            print("subscription not existed")
         return context
 
-# 新しいビューの追加
+# お気に入り一覧のビュー
 class FavoritesView(LoginRequiredMixin, ListView):
     model = Favorite
     template_name = 'userapp/favorites.html'
@@ -367,6 +313,7 @@ class FavoritesView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return Favorite.objects.filter(user=self.request.user).select_related('shop')
 
+# お気に入り解除のビュー
 @login_required
 def unfavorite_shop(request, shop_id):
     shop = get_object_or_404(Shop, id=shop_id)
@@ -374,6 +321,7 @@ def unfavorite_shop(request, shop_id):
     messages.success(request, 'お気に入りから削除しました。', extra_tags='favorite')
     return redirect('userapp:subscription')
 
+# 予約一覧のビュー
 class ReservationsView(LoginRequiredMixin, ListView):
     model = Reservation
     template_name = 'userapp/reservations.html'
@@ -382,6 +330,7 @@ class ReservationsView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return Reservation.objects.filter(user=self.request.user)
 
+# 支払い方法のビュー
 class PaymentMethodView(LoginRequiredMixin, TemplateView):
     template_name = 'userapp/payment_method.html'
 
@@ -395,6 +344,7 @@ class PaymentMethodView(LoginRequiredMixin, TemplateView):
             messages.error(self.request, 'この機能を使用するには有料会員登録が必要です')
         return context
 
+# サブスクリプション解除のビュー
 class CancelSubscriptionView(LoginRequiredMixin, TemplateView):
     template_name = 'userapp/cancel_subscription.html'
 
@@ -405,22 +355,53 @@ class CancelSubscriptionView(LoginRequiredMixin, TemplateView):
         subscription.save()
         messages.success(request, '有料会員を解約しました。', extra_tags='subscription')
         return redirect('userapp:subscription')
-    
+
         try:
             subscription = Subscription.objects.get(user=request.user)
             stripe.Subscription.delete(subscription.stripe_subscription_id)
             subscription.active = False
             subscription.save()
             messages.success(request, '有料会員を解約しました。', extra_tags='subscription')
-        # except stripe.error.StripeError as e:
-            # messages.error(request, f'解約処理に失敗しました: {e.error.message}')
-        # except Subscription.DoesNotExist:
-            # messages.error(request, 'サブスクリプションが存在しません。')
         except Exception as e:
             messages.error(request, f'予期しないエラーが発生しました: {str(e)}')
 
         return redirect('userapp:mypage')
-    
+
+# クレジットカード登録と支払い機能を持たせるためのビュー
+@method_decorator(login_required, name='dispatch')
+class SubscribeView(View):
+    template_name = 'userapp/payment_method.html'
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name, {
+            'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY
+        })
+
+    def post(self, request, *args, **kwargs):
+        stripe_token = request.POST.get('stripe_token')
+        try:
+            customer = stripe.Customer.create(
+                email=request.user.email,
+                source=stripe_token
+            )
+            subscription = stripe.Subscription.create(
+                customer=customer.id,
+                items=[{'price': settings.STRIPE_PRICE_ID}],
+            )
+            Subscription.objects.create(
+                user=request.user,
+                stripe_customer_id=customer.id,
+                stripe_subscription_id=subscription.id,
+                active=True
+            )
+            messages.success(request, 'サブスクリプションの登録が完了しました。')
+            return redirect('userapp:subscription')
+        except stripe.error.StripeError as e:
+            messages.error(request, f'エラーが発生しました: {e.error.message}')
+        return render(request, self.template_name, {
+            'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY
+        })
+
 # 新規作成用
 class SignUpView(CreateView):
     form_class = SignUpForm

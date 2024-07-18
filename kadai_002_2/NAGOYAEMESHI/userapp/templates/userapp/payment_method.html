@@ -1,37 +1,105 @@
-{% extends 'base.html' %}
-{% block content %}
-<div class="container">
-    <h1>お支払い方法</h1>
-    <form method="post">
-        <div class="form-group">
-            <label>カード種別</label>
-            <input type="text" class="form-control" value="visa" readonly>
-        </div>
-        <div class="form-group">
-            <label>カード名義人</label>
-            <input type="text" class="form-control" value="samurai" readonly>
-        </div>
-        <div class="form-group">
-            <label>カード番号</label>
-            <input type="text" class="form-control" value="**** **** **** 4242" readonly>
-        </div>
-        <div class="form-group">
-            <label for="card_name">カード名義人</label>
-            <input type="text" class="form-control" id="card_name" name="card_name">
-        </div>
-        <div class="form-group">
-            <label for="card_number">カード番号</label>
-            <input type="text" class="form-control" id="card_number" name="card_number">
-        </div>
-        <div class="form-group">
-            <label for="expiry_date">有効期限（月/年）</label>
-            <input type="text" class="form-control" id="expiry_date" name="expiry_date">
-        </div>
-        <div class="form-group">
-            <label for="security_code">セキュリティコード</label>
-            <input type="text" class="form-control" id="security_code" name="security_code">
-        </div>
-        <button type="submit" class="btn btn-primary">変更</button>
-    </form>
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>クレジットカード登録</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/subscribe.css' %}">
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>クレジットカード登録</h1>
+        <form id="payment-form" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="cardholder-name">カード名義人</label>
+                <input type="text" id="cardholder-name" placeholder="カード名義人">
+            </div>
+            <div class="form-group">
+                <label for="card-element">カード情報</label>
+                <div id="card-element">
+                    <!-- Stripe Elements がここに挿入されます。 -->
+                </div>
+                <div id="card-errors" role="alert"></div>
+            </div>
+            <button id="submit" type="submit">登録する</button>
+        </form>
+    </div>
+    <script>
+        // Stripeの公開可能キーを設定
+        const stripe = Stripe('{{ stripe_publishable_key }}');
+
+        // Elementsを作成
+        const elements = stripe.elements();
+        const style = {
+            base: {
+                color: "#32325d",
+                fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                fontSmoothing: "antialiased",
+                fontSize: "16px",
+                "::placeholder": {
+                    color: "#aab7c4"
+                }
+            },
+            invalid: {
+                color: "#fa755a",
+                iconColor: "#fa755a"
+            }
+        };
+
+        // カード情報の入力欄を作成
+        const card = elements.create("card", { style: style });
+        card.mount("#card-element");
+
+        // エラーメッセージの表示
+        card.on('change', ({error}) => {
+            const displayError = document.getElementById('card-errors');
+            if (error) {
+                displayError.textContent = error.message;
+            } else {
+                displayError.textContent = '';
+            }
+        });
+
+        // フォーム送信時の処理
+        const form = document.getElementById('payment-form');
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const cardholderName = document.getElementById('cardholder-name').value;
+
+            const { paymentMethod, error } = await stripe.createPaymentMethod({
+                type: 'card',
+                card: card,
+                billing_details: {
+                    name: cardholderName,
+                },
+            });
+
+            if (error) {
+                const displayError = document.getElementById('card-errors');
+                displayError.textContent = error.message;
+            } else {
+                // サーバーに送信
+                const response = await fetch("{% url 'userapp:subscribe' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                    body: JSON.stringify({ payment_method_id: paymentMethod.id })
+                });
+
+                if (response.ok) {
+                    // 成功時の処理
+                    window.location.href = "{% url 'userapp:subscription' %}";
+                } else {
+                    const displayError = document.getElementById('card-errors');
+                    displayError.textContent = '支払い情報の送信に失敗しました。';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
