@@ -30,6 +30,19 @@
         </div>
     </div>
 
+    <!-- メッセージの表示 -->
+    <div class="row">
+        <div class="col-md-12">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
     <!-- 口コミ情報 -->
     <br>
     <div class="row">
@@ -52,6 +65,12 @@
                                 <br>
                                 <p>{{ item.comment }}</p>
                                 <p class="small">{{ item.created_at }}</p>            
+                                {% if item.user == user %}
+                                    <form method="post" action="{% url 'userapp:review_delete' item.pk %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger">削除</button>
+                                    </form>
+                                {% endif %}
                             </div>
                         </div>
                     </div>

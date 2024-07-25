@@ -95,9 +95,9 @@ LOGIN_REDIRECT_URL = 'userapp:index'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Stripe settings
-STRIPE_SECRET_KEY = 'your_stripe_secret_key'
-STRIPE_PUBLISHABLE_KEY = 'your_stripe_publishable_key'
-STRIPE_PRICE_ID = 'your_stripe_price_id'
+STRIPE_SECRET_KEY = 'sk_test_51PegsNHgh7sLH8myPovEAkC4vKrXmAMecdKrBbaW7tS4tKWH0ATCpAjz0HS5Qdbc5lnH1Zu5WHI4quuQCYTsx4fF0033T7zJoP'
+STRIPE_PUBLISHABLE_KEY = 'pk_test_51PegsNHgh7sLH8myw7KsXeXiADJWvP4d7hfco1kOfb1hTxeEZw8f4PdgXNxhri368KMNGeu3AehTuWBP6reIdH0i00JjXSkETX'
+STRIPE_PRICE_ID = 'yprod_QVitYbhRTHmqXo'
 STRIPE_WEBHOOK_SECRET = 'your_stripe_webhook_secret'
 
 # Custom authentication backend

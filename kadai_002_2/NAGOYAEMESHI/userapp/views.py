@@ -240,6 +240,10 @@ class SubscriptionView(TemplateView):
         except Subscription.DoesNotExist:
             context['subscription'] = None
             messages.error(self.request, 'この機能を使用するには有料会員登録が必要です')
+        
+        # 公開鍵（テスト用）
+        context["sk_test_51PegsNHgh7sLH8myPovEAkC4vKrXmAMecdKrBbaW7tS4tKWH0ATCpAjz0HS5Qdbc5lnH1Zu5WHI4quuQCYTsx4fF0033T7zJoP"] = settings.STRIPE_PUBLISHABLE_KEY
+        
         return context
 
 # Stripe Webhookの処理
@@ -349,23 +353,18 @@ class CancelSubscriptionView(LoginRequiredMixin, TemplateView):
     template_name = 'userapp/cancel_subscription.html'
 
     def post(self, request, *args, **kwargs):
-        subscription = Subscription.objects.get(user=request.user)
-        stripe.Subscription.delete(subscription.stripe_subscription_id)
-        subscription.active = False
-        subscription.save()
-        messages.success(request, '有料会員を解約しました。', extra_tags='subscription')
-        return redirect('userapp:subscription')
-
         try:
             subscription = Subscription.objects.get(user=request.user)
             stripe.Subscription.delete(subscription.stripe_subscription_id)
             subscription.active = False
             subscription.save()
             messages.success(request, '有料会員を解約しました。', extra_tags='subscription')
+        except stripe.error.InvalidRequestError as e:
+            messages.error(request, f'サブスクリプションの解除に失敗しました: {str(e)}')
         except Exception as e:
             messages.error(request, f'予期しないエラーが発生しました: {str(e)}')
 
-        return redirect('userapp:mypage')
+        return redirect('userapp:subscription')
 
 # クレジットカード登録と支払い機能を持たせるためのビュー
 @method_decorator(login_required, name='dispatch')
@@ -388,6 +387,8 @@ class SubscribeView(View):
                 customer=customer.id,
                 items=[{'price': settings.STRIPE_PRICE_ID}],
             )
+            
+            # サブスクリプションを作成
             Subscription.objects.create(
                 user=request.user,
                 stripe_customer_id=customer.id,

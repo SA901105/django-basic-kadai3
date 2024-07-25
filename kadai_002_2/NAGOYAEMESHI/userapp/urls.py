@@ -7,7 +7,7 @@ from .views import (
     SubscriptionView, stripe_webhook, MyPageView, ProfileView,
     ReservationsView, FavoritesView, PaymentMethodView, CancelSubscriptionView,
     ShopInfoView, ProfileEditView, ReservationCancelView,
-    unfavorite_shop, SubscribeView  # ここにSubscribeViewを追加
+    unfavorite_shop, SubscribeView, ReviewDeleteView  # ここにReviewDeleteViewを追加
 )
 
 app_name = 'userapp'
@@ -66,6 +66,9 @@ urlpatterns = [
 
     # サブスクリプション登録用のURLパターン
     path('subscribe/', SubscribeView.as_view(), name='subscribe'),
+
+    # レビュー削除
+    path('review/delete/<int:pk>/', ReviewDeleteView.as_view(), name='review_delete'),
 
     # パスワードリセット関連のURLパターン
     path('password_reset/', PasswordResetView.as_view(template_name='userapp/password_reset_form.html'), name='password_reset'),
