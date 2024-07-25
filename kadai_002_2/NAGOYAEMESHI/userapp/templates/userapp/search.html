@@ -5,28 +5,7 @@
 <link rel="stylesheet" type="text/css" href="{% static 'css/index.css' %}">
 {% endblock css %}
 
-  {% block content %}
-  <!-- <section class="search-form">
-    <div class="container">
-       <form method="GET" action="{% url 'userapp:search' %}">
-            <div class="form-group">
-                <label for="selected_category">業態</label>
-                <select name="selected_category" id="selected_category" class="form-control">
-                    <option value="">選択してください</option>
-                    {% for category in searchform.fields.selected_category.queryset %}
-                        <option value="{{ category.id }}" {% if category.id|stringformat:"s" == request.GET.selected_category %}selected{% endif %}>{{ category.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="freeword">フリーワード</label>
-                <input type="text" name="freeword" id="freeword" class="form-control" value="{{ request.GET.freeword }}">
-            </div>
-            <button type="submit" class="btn btn-primary">検索</button>
-        </form> -->
-    </div>
-</section>
-
+{% block content %}
 <section class="search-results">
     <div class="container">
         <h2 class="section-title">検索結果</h2>

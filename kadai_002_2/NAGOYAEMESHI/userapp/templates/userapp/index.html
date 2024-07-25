@@ -40,10 +40,10 @@
 </section>
 
 <form method="GET" action="{% url 'userapp:search' %}" class="form-inline my-2 my-lg-0">
-    <select class="form-control mr-sm-2" name="category_l">
+    <select class="form-control mr-sm-2" name="selected_category">
         <option value="">カテゴリ</option>
-        {% for shop in category_list %}
-        <option value="{{ shop.category }}">{{ shop.name }}</option>
+        {% for category in category_list %}
+        <option value="{{ category.id }}">{{ category.name }}</option>
         {% endfor %}
     </select>
     <input class="form-control mr-sm-2" type="text" placeholder="フリーワード" aria-label="Search" name="freeword">
