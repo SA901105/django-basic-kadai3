@@ -10,12 +10,13 @@ from django.db.models import Avg
 from django.contrib import messages
 from django.conf import settings
 import stripe
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse, reverse_lazy
 from .mixins import PaidMemberRequiredMixin
+import json
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -377,17 +378,24 @@ class SubscribeView(View):
         })
 
     def post(self, request, *args, **kwargs):
-        stripe_token = request.POST.get('stripe_token')
+        data = json.loads(request.body)
+        token = data.get('token')
+        cardholder_name = data.get('name')
+
         try:
+            # Stripeカスタマーを作成
             customer = stripe.Customer.create(
                 email=request.user.email,
-                source=stripe_token
+                source=token,
+                name=cardholder_name
             )
+
+            # Stripeサブスクリプションを作成
             subscription = stripe.Subscription.create(
                 customer=customer.id,
                 items=[{'price': settings.STRIPE_PRICE_ID}],
             )
-            
+
             # サブスクリプションを作成
             Subscription.objects.create(
                 user=request.user,
@@ -396,12 +404,13 @@ class SubscribeView(View):
                 active=True
             )
             messages.success(request, 'サブスクリプションの登録が完了しました。')
-            return redirect('userapp:subscription')
+            return JsonResponse({'status': 'success'}, status=200)
         except stripe.error.StripeError as e:
-            messages.error(request, f'エラーが発生しました: {e.error.message}')
-        return render(request, self.template_name, {
-            'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY
-        })
+            messages.error(request, f'エラーが発生しました: {str(e)}')
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+        except Exception as e:
+            messages.error(request, f'予期しないエラーが発生しました: {str(e)}')
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
 # 新規作成用
 class SignUpView(CreateView):

@@ -60,6 +60,9 @@ urlpatterns = [
 
     # 支払い方法ページ
     path('mypage/payment_method/', PaymentMethodView.as_view(), name='payment_method'),
+    
+    # 支払い
+    # path('subscription/payment_save/', subscription_payment_save.as_view(), name="subscription_payment_save"),
 
     # サブスクリプションキャンセルページ
     path('mypage/cancel_subscription/', CancelSubscriptionView.as_view(), name='cancel_subscription'),
