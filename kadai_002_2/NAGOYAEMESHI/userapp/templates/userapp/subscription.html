@@ -1,9 +1,9 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block title %}有料プラン登録{% endblock %}
 
 {% block content %}
-<!-- <h1>サブスクリプション情報</h1>
-<p>ここにサブスクリプションに関する情報を表示します。</p> -->
-
 <!-- メッセージ表示 -->
 {% if messages %}
 <div class="container" style="margin-top:1rem;">
@@ -26,10 +26,6 @@
 </div>
 {% endif %}
 
-{% extends "base.html" %}
-{% load static %}
-{% block title %}有料プラン登録{% endblock %}
-{% block content %}
 <div class="container nagoyameshi-container pb-5">
     <div class="row justify-content-center">
         <div class="col-xl-5 col-lg-6 col-md-8">
@@ -57,7 +53,8 @@
 
             <div class="text-danger" id="stripe-error"></div>
 
-            <!--form action="{% url 'subscription_save' %}" method="post">
+            <!--
+            <form action="{% url 'subscription_save' %}" method="post">
                 {% csrf_token %}
                 <input class="card-holder-name mb-3" name="card-name" type="text" placeholder="カード名義人" required>
                 <div class="card-element mb-4" name="card-no"></div>
@@ -65,7 +62,8 @@
             <div class="d-flex justify-content-center">
                 <button class="btn btn-primary text-white shadow-sm w-50" id="card-button"
                     data-secret="seti_1NhXaeIXjS4orlsml8g37ptc_secret_OUWdfX6TmKHMHD4o9bsjmzRaPfaL5sv">登録</button>
-            </div-->
+            </div>
+            -->
             <div class="d-flex justify-content-center">
                 <button class="btn btn-primary text-white shadow-sm w-50" id="checkout">登録</button>
             </div>
@@ -77,8 +75,4 @@
 {% block extra_js %}
 <script src="https://js.stripe.com/v3/"></script>
 <script src="{% static 'js/stripe.js' %}"></script>
-{% endblock %}
-
-
-
 {% endblock %}

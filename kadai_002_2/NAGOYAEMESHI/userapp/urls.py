@@ -4,10 +4,10 @@ from django.contrib.auth.views import (
 )
 from .views import (
     IndexView, SignUpView, Login, Search,
-    SubscriptionView, stripe_webhook, MyPageView, ProfileView,
+    SubscriptionView, MyPageView, ProfileView,
     ReservationsView, FavoritesView, PaymentMethodView, CancelSubscriptionView,
     ShopInfoView, ProfileEditView, ReservationCancelView,
-    unfavorite_shop, SubscribeView, ReviewDeleteView  # ここにReviewDeleteViewを追加
+    unfavorite_shop, SubscribeView, ReviewDeleteView, ReviewEditView, success, cancel, SubscriptionPaymentView
 )
 
 app_name = 'userapp'
@@ -34,9 +34,6 @@ urlpatterns = [
     # サブスクリプション情報ページ
     path('subscription/', SubscriptionView.as_view(), name='subscription'),
 
-    # StripeのWebhook
-    path('stripe_webhook/', stripe_webhook, name='stripe_webhook'),
-
     # マイページ
     path('mypage/', MyPageView.as_view(), name='mypage'),
 
@@ -60,9 +57,6 @@ urlpatterns = [
 
     # 支払い方法ページ
     path('mypage/payment_method/', PaymentMethodView.as_view(), name='payment_method'),
-    
-    # 支払い
-    # path('subscription/payment_save/', subscription_payment_save.as_view(), name="subscription_payment_save"),
 
     # サブスクリプションキャンセルページ
     path('mypage/cancel_subscription/', CancelSubscriptionView.as_view(), name='cancel_subscription'),
@@ -72,6 +66,18 @@ urlpatterns = [
 
     # レビュー削除
     path('review/delete/<int:pk>/', ReviewDeleteView.as_view(), name='review_delete'),
+
+    # レビュー編集
+    path('review/edit/<int:pk>/', ReviewEditView.as_view(), name='review_edit'),
+
+    # 支払いに成功した後の画面
+    path('subscription/success/', success, name='subscription_success'),
+
+    # 支払いに失敗した後の画面
+    path('subscription/cancel/', cancel, name='subscription_cancel'),
+
+    # 支払い方法登録
+    path('subscription/payment/', SubscriptionPaymentView.as_view(), name='subscription_payment'),
 
     # パスワードリセット関連のURLパターン
     path('password_reset/', PasswordResetView.as_view(template_name='userapp/password_reset_form.html'), name='password_reset'),

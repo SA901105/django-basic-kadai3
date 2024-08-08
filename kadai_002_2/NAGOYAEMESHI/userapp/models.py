@@ -1,6 +1,5 @@
 from django.db import models
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -87,7 +86,8 @@ class Profile(models.Model):
         ('free', '一般ユーザ'),
         ('payed', '課金ユーザ'),
     )
-    user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='ユーザ')
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='ユーザ')
     user_type = models.CharField(max_length=20, choices=USER_TYPES, default='free', verbose_name='会員種別')
     username_kana = models.CharField(max_length=20, blank=True, verbose_name='フリガナ')
     post_code = models.CharField(max_length=10, blank=True, verbose_name='郵便番号')
@@ -102,13 +102,14 @@ class Profile(models.Model):
     stripe_card_no = models.CharField(max_length=20, blank=True)
     stripe_card_brand = models.CharField(max_length=20, blank=True)
 
-@receiver(post_save, sender=User)
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_user_profile(sender, instance, created, **kwargs):
     """Create user profile when user is created"""
     if created:
         Profile.objects.create(user=instance)
 
-@receiver(post_save, sender=User)
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def save_user_profile(sender, instance, **kwargs):
     """Update user profile when user is saved"""
     instance.profile.save()
+

@@ -247,33 +247,6 @@ class SubscriptionView(TemplateView):
         
         return context
 
-# Stripe Webhookの処理
-@csrf_exempt
-def stripe_webhook(request):
-    payload = request.body
-    sig_header = request.META['HTTP_STRIPE_SIGNATURE']
-    event = None
-
-    try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
-        )
-    except ValueError as e:
-        return JsonResponse({'status': 'invalid payload'}, status=400)
-    except stripe.error.SignatureVerificationError as e:
-        return JsonResponse({'status': 'invalid signature'}, status=400)
-
-    if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-        user = get_user_model().objects.get(email=session['customer_email'])
-        subscription = Subscription.objects.get(user=user)
-        subscription.stripe_customer_id = session['customer']
-        subscription.stripe_subscription_id = session['subscription']
-        subscription.active = True
-        subscription.save()
-
-    return JsonResponse({'status': 'success'}, status=200)
-
 # プロフィール編集のビュー
 @method_decorator(login_required, name='dispatch')
 class ProfileEditView(UpdateView):
@@ -348,6 +321,16 @@ class PaymentMethodView(LoginRequiredMixin, TemplateView):
             context['subscription'] = None
             messages.error(self.request, 'この機能を使用するには有料会員登録が必要です')
         return context
+
+# 支払い成功時のビュー
+def success(request):
+    messages.success(request, "支払いが成功しました。")
+    return render(request, 'userapp/success.html')
+
+# 支払い失敗時のビュー
+def cancel(request):
+    messages.error(request, "支払いがキャンセルされました。")
+    return render(request, 'userapp/cancel.html')
 
 # サブスクリプション解除のビュー
 class CancelSubscriptionView(LoginRequiredMixin, TemplateView):
