@@ -321,6 +321,17 @@ class PaymentMethodView(LoginRequiredMixin, TemplateView):
             context['subscription'] = None
             messages.error(self.request, 'この機能を使用するには有料会員登録が必要です')
         return context
+    
+# サブスクリプション支払いページのビュー
+from django.views.generic import TemplateView
+
+class SubscriptionPaymentView(TemplateView):
+    template_name = 'userapp/subscription_payment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['stripe_publishable_key'] = settings.STRIPE_PUBLISHABLE_KEY
+        return context
 
 # 支払い成功時のビュー
 def success(request):

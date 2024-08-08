@@ -102,6 +102,7 @@ class Profile(models.Model):
     stripe_card_no = models.CharField(max_length=20, blank=True)
     stripe_card_brand = models.CharField(max_length=20, blank=True)
 
+# ユーザー作成時にプロフィールを自動作成
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_user_profile(sender, instance, created, **kwargs):
     """Create user profile when user is created"""

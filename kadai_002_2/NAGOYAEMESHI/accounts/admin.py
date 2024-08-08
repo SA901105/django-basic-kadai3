@@ -1,8 +1,17 @@
+# 管理画面モジュールのインポート
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import CustomUser
 from .forms import CustomUserCreationForm, CustomUserChangeForm
+from userapp.models import Profile
 
+# プロフィールインラインモデル
+class ProfileInline(admin.StackedInline):
+    model = Profile
+    can_delete = False
+    verbose_name_plural = 'Profiles'
+
+# カスタムユーザ管理クラス
 class CustomUserAdmin(UserAdmin):
     add_form = CustomUserCreationForm
     form = CustomUserChangeForm
@@ -42,5 +51,13 @@ class CustomUserAdmin(UserAdmin):
             ),
         }),
     )
+
+    inlines = (ProfileInline,)
+
+# カスタムユーザモデルの登録
+try:
+    admin.site.unregister(CustomUser)
+except admin.sites.NotRegistered:
+    pass
 
 admin.site.register(CustomUser, CustomUserAdmin)
